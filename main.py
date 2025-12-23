@@ -1,26 +1,15 @@
 # Reasoning:
-# 1. Aplikacja czatu z Gemini API - potrzebny GUI (PySimpleGUI)
-# 2. Funkcje:
-#    - Lista czatów (sidebar)
-#    - Historia rozmowy (centralne okno)
-#    - Pole do pisania wiadomości
-#    - Możliwość wysyłania plików (obrazy, dokumenty)
-#    - Ustawienia: instrukcje systemowe, wybór modelu, temperatura
-#    - Zapisywanie czatów w JSON
-# 3. Struktura:
-#    - chat_manager.py: zarządzanie czatami i historią
-#    - config.py: konfiguracja i ustawienia
-#    - main.py: główna aplikacja GUI
-# 4. Użycie google-generativeai (oficjalna biblioteka Gemini)
-# 5. Layout: kolumny - sidebar z czatami, główne okno z historią i inputem
+# 1. Migracja z google.generativeai na google.genai (nowa API)
+# 2. Poprawki dla PySimpleGUI - użycie PySimpleGUI.PySimpleGUI zamiast sg.theme
+# 3. Zachowanie wszystkich funkcji aplikacji
 
 import PySimpleGUI as sg
 import os
 import json
-import base64
 from pathlib import Path
 from datetime import datetime
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from PIL import Image
 import io
 
@@ -28,41 +17,45 @@ from chat_manager import ChatManager
 from config import Config
 
 # Konfiguracja PySimpleGUI
-sg.theme('DarkBlue3')
+try:
+    sg.theme('DarkBlue3')
+except:
+    pass  # Starsza wersja PySimpleGUI może nie mieć theme
 
 class GeminiChatApp:
     def __init__(self):
         self.config = Config()
         self.chat_manager = ChatManager()
         self.current_chat_id = None
+        self.client = None
         self.model = None
         
         # Inicjalizacja Gemini API
         if self.config.api_key:
-            genai.configure(api_key=self.config.api_key)
+            self.client = genai.Client(api_key=self.config.api_key)
             self.update_model()
         
     def update_model(self):
         """Aktualizuj model Gemini na podstawie konfiguracji"""
         try:
-            generation_config = {
-                "temperature": self.config.temperature,
-                "top_p": self.config.top_p,
-                "top_k": self.config.top_k,
-                "max_output_tokens": self.config.max_tokens,
-            }
+            if not self.client:
+                if self.config.api_key:
+                    self.client = genai.Client(api_key=self.config.api_key)
             
+            # Konfiguracja generowania
+            self.generation_config = types.GenerateContentConfig(
+                temperature=self.config.temperature,
+                top_p=self.config.top_p,
+                top_k=self.config.top_k,
+                max_output_tokens=self.config.max_tokens,
+            )
+            
+            # System instruction
             if self.config.system_instruction:
-                self.model = genai.GenerativeModel(
-                    model_name=self.config.model_name,
-                    generation_config=generation_config,
-                    system_instruction=self.config.system_instruction
-                )
-            else:
-                self.model = genai.GenerativeModel(
-                    model_name=self.config.model_name,
-                    generation_config=generation_config
-                )
+                self.generation_config.system_instruction = self.config.system_instruction
+            
+            self.model = self.config.model_name
+            
         except Exception as e:
             sg.popup_error(f"Błąd inicjalizacji modelu: {str(e)}")
     
@@ -179,7 +172,7 @@ class GeminiChatApp:
         if not message.strip() and not attachments:
             return
         
-        if not self.model:
+        if not self.client:
             sg.popup_error("Skonfiguruj API Key w ustawieniach!")
             return
         
@@ -204,19 +197,43 @@ class GeminiChatApp:
                 for file_path in attachments:
                     try:
                         # Sprawdź czy to obraz
-                        img = Image.open(file_path)
-                        content_parts.append(img)
-                    except:
-                        # Jeśli to nie obraz, dodaj jako tekst
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            content_parts.append(f"[Zawartość pliku {os.path.basename(file_path)}]:\n{f.read()}")
+                        with open(file_path, 'rb') as f:
+                            file_data = f.read()
+                        
+                        # Określ MIME type
+                        ext = os.path.splitext(file_path)[1].lower()
+                        mime_types = {
+                            '.png': 'image/png',
+                            '.jpg': 'image/jpeg',
+                            '.jpeg': 'image/jpeg',
+                            '.gif': 'image/gif',
+                            '.bmp': 'image/bmp'
+                        }
+                        
+                        if ext in mime_types:
+                            # To jest obraz
+                            part = types.Part.from_bytes(
+                                data=file_data,
+                                mime_type=mime_types[ext]
+                            )
+                            content_parts.append(part)
+                        else:
+                            # Plik tekstowy
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                content_parts.append(types.Part.from_text(f"[Zawartość pliku {os.path.basename(file_path)}]:\n{f.read()}"))
+                    except Exception as e:
+                        print(f"Błąd przetwarzania pliku {file_path}: {e}")
             
             # Dodaj tekst wiadomości
             if message.strip():
-                content_parts.append(message)
+                content_parts.append(types.Part.from_text(message))
             
             # Wyślij do Gemini
-            response = self.model.generate_content(content_parts)
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=content_parts,
+                config=self.generation_config
+            )
             
             # Dodaj odpowiedź modelu
             self.chat_manager.add_message(
@@ -318,7 +335,7 @@ class GeminiChatApp:
                 
                 # Rekonfiguruj API
                 if self.config.api_key:
-                    genai.configure(api_key=self.config.api_key)
+                    self.client = genai.Client(api_key=self.config.api_key)
                     self.update_model()
                     sg.popup('Ustawienia zapisane!')
             

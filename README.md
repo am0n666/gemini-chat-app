@@ -15,7 +15,7 @@ Pełnofunkcjonalna aplikacja do czatu z Google Gemini API, zbudowana w Pythonie 
 ### Wymagania
 
 - Python 3.8 lub nowszy
-- Klucz API Google Gemini ([uzyskaj tutaj](https://makersuite.google.com/app/apikey))
+- Klucz API Google Gemini ([uzyskaj tutaj](https://aistudio.google.com/apikey))
 
 ### Kroki instalacji
 
@@ -26,8 +26,18 @@ cd gemini-chat-app
 ```
 
 2. Zainstaluj wymagane biblioteki:
+
+**WAŻNE - PySimpleGUI wymaga specjalnej instalacji:**
 ```bash
-pip install -r requirements.txt
+# Najpierw odinstaluj starą wersję (jeśli jest)
+python -m pip uninstall PySimpleGUI
+python -m pip cache purge
+
+# Zainstaluj z prywatnego serwera PyPI
+python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
+
+# Zainstaluj pozostałe zależności
+pip install google-genai Pillow
 ```
 
 3. (Opcjonalnie) Ustaw zmienną środowiskową z kluczem API:
@@ -69,6 +79,20 @@ python main.py
    - Dostosuj parametry: temperatura, max tokens, top_p, top_k
    - Dodaj instrukcje systemowe dla modelu
 
+## Migracja do nowej API
+
+Aplikacja używa nowej biblioteki `google-genai` (zamiast przestarzałej `google.generativeai`). Jeśli migrowano z wcześniejszej wersji:
+
+1. Odinstaluj starą bibliotekę:
+```bash
+pip uninstall google-generativeai
+```
+
+2. Zainstaluj nową:
+```bash
+pip install google-genai
+```
+
 ## Struktura plików
 
 ```
@@ -103,6 +127,27 @@ gemini-chat-app/
 
 ## Rozwiązywanie problemów
 
+### Problem z PySimpleGUI
+```
+AttributeError: module 'PySimpleGUI' has no attribute 'theme'
+```
+**Rozwiązanie:** Zainstaluj PySimpleGUI z prywatnego serwera:
+```bash
+python -m pip uninstall PySimpleGUI
+python -m pip cache purge
+python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
+```
+
+### Problem z przestarzałą API
+```
+FutureWarning: All support for the `google.generativeai` package has ended
+```
+**Rozwiązanie:** Zaktualizowano do `google-genai`. Zainstaluj najnowszą wersję:
+```bash
+pip uninstall google-generativeai
+pip install google-genai
+```
+
 ### Błąd API Key
 - Sprawdź czy klucz API jest prawidłowy
 - Upewnij się że masz aktywne konto Google AI Studio
@@ -116,6 +161,19 @@ gemini-chat-app/
 - Sprawdź uprawnienia do zapisu w folderze aplikacji
 - Upewnij się że plik `chats.json` nie jest otwarty w innym programie
 
+## Changelog
+
+### v2.0 (2025-12-23)
+- ✨ Migracja do nowej API `google-genai`
+- 🔧 Poprawki kompatybilności z PySimpleGUI
+- 📚 Zaktualizowana dokumentacja instalacji
+
+### v1.0 (2025-12-23)
+- 🎉 Pierwsze wydanie
+- 💬 Podstawowa funkcjonalność czatu
+- 📎 Obsługa załączników
+- ⚙️ Panel konfiguracji
+
 ## Licencja
 
 MIT License - możesz swobodnie używać, modyfikować i dystrybuować tę aplikację.
@@ -127,5 +185,6 @@ Stworzone przez am0n666
 ## Linki
 
 - [Google Gemini API](https://ai.google.dev/)
+- [Nowa dokumentacja google-genai](https://github.com/googleapis/python-genai)
 - [Dokumentacja PySimpleGUI](https://www.pysimplegui.org/)
 - [Repozytorium GitHub](https://github.com/am0n666/gemini-chat-app)
