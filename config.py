@@ -9,9 +9,9 @@ class Config:
     def __init__(self, config_file='config.json'):
         self.config_file = config_file
         
-        # Domyślne wartości
+        # Domyślne wartości - najnowszy model Gemini 3 Flash
         self.api_key = os.environ.get('GEMINI_API_KEY', '')
-        self.model_name = 'gemini-2.0-flash-exp'
+        self.model_name = 'gemini-3-flash-preview'
         self.temperature = 1.0
         self.max_tokens = 8192
         self.top_p = 0.95

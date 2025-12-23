@@ -10,6 +10,7 @@ Pełnofunkcjonalna aplikacja do czatu z Google Gemini API, zbudowana w Pythonie 
 - 💾 **Automatyczny zapis** - Historia czatów zapisywana lokalnie w JSON
 - 🎨 **Przyjazny interfejs** - Intuicyjny GUI z listą czatów, historią i ustawieniami
 - 🔄 **Kontekst konwersacji** - Używa chat.send_message() dla zachowania kontekstu
+- ⭐ **Najnowsze modele** - Obsługa Gemini 3 Pro, Flash i Pro Image
 
 ## Instalacja
 
@@ -112,10 +113,20 @@ gemini-chat-app/
 
 ## Dostępne modele
 
-- `gemini-2.0-flash-exp` (domyślny) - Najnowszy eksperymentalny model
-- `gemini-1.5-pro` - Zaawansowany model o dużej pojemności
-- `gemini-1.5-flash` - Szybki model ogólnego przeznaczenia
-- `gemini-1.5-flash-8b` - Lekki i wydajny model
+### ⭐ Gemini 3 (Najnowsze - Grudzień 2025)
+- **gemini-3-flash-preview** (domyślny) - Pro-level inteligencja przy prędkości Flash
+- **gemini-3-pro-preview** - Najinteligentniejszy model Google z state-of-the-art rozumowaniem
+- **gemini-3-pro-image-preview** - Generowanie obrazów 4K
+
+### Gemini 2.5
+- **gemini-2.5-flash** - Szybki model ogólnego przeznaczenia
+- **gemini-2.5-pro** - Zaawansowany model z rozszerzonym rozumowaniem
+
+### Gemini 2.0 & 1.5
+- **gemini-2.0-flash-exp** - Eksperymentalny model drugiej generacji
+- **gemini-1.5-pro** - Zaawansowany model o dużej pojemności
+- **gemini-1.5-flash** - Szybki model ogólnego przeznaczenia
+- **gemini-1.5-flash-8b** - Lekki i wydajny model
 
 ## Obsługiwane typy plików
 
@@ -156,7 +167,7 @@ pip install google-genai
 - Sprawdź limity API na swoim koncie
 
 ### Błąd wysyłania obrazów
-- Upewnij się że używasz modelu obsługującego wizję (np. gemini-1.5-pro, gemini-2.0-flash-exp)
+- Upewnij się że używasz modelu obsługującego wizję (np. gemini-3-pro-preview, gemini-3-flash-preview)
 - Sprawdź czy obrazy nie są zbyt duże (maks. 20MB)
 
 ### Aplikacja nie zapisuje historii
@@ -165,21 +176,42 @@ pip install google-genai
 
 ## Changelog
 
+### v3.0 (2025-12-23)
+- ⭐ Dodanie najnowszych modeli Gemini 3: Pro, Flash, Pro Image
+- 🔄 Zmiana domyślnego modelu na gemini-3-flash-preview
+- 📚 Zaktualizowana lista modeli w dokumentacji
+
 ### v2.1 (2025-12-23)
 - ✅ PEŁNA migracja do najnowszej API `google-genai`
 - 🔄 Użycie `chat.send_message()` dla lepszego kontekstu konwersacji
-- 📚 Aktualizacja zgodnie z oficjalną dokumentacją googleapis.github.io/python-genai/
+- 📚 Aktualizacja zgodnie z oficjalną dokumentacją
 
 ### v2.0 (2025-12-23)
 - ✨ Migracja do nowej API `google-genai`
 - 🔧 Poprawki kompatybilności z PySimpleGUI
-- 📚 Zaktualizowana dokumentacja instalacji
 
 ### v1.0 (2025-12-23)
 - 🎉 Pierwsze wydanie
-- 💬 Podstawowa funkcjonalność czatu
-- 📎 Obsługa załączników
-- ⚙️ Panel konfiguracji
+
+## Cechy modeli Gemini 3
+
+### Gemini 3 Pro Preview
+- **Context Window**: 1M tokenów wejściowych / 64k wyjściowych
+- **Knowledge Cutoff**: Styczeń 2025
+- **Pricing**: $2/$12 za milion tokenów (<200k) lub $4/$18 (>200k)
+- **Najlepszy do**: Złożonych zadań wymagających głębokiego rozumowania
+
+### Gemini 3 Flash Preview  
+- **Context Window**: 1M tokenów wejściowych / 64k wyjściowych
+- **Knowledge Cutoff**: Styczeń 2025
+- **Pricing**: $0.50/$3 za milion tokenów
+- **Najlepszy do**: Szybkich odpowiedzi z inteligencją na poziomie Pro
+
+### Gemini 3 Pro Image Preview
+- **Context Window**: 65k tokenów wejściowych / 32k wyjściowych
+- **Knowledge Cutoff**: Styczeń 2025
+- **Pricing**: $2 za tekst wejściowy / $0.134 za obraz wyjściowy
+- **Najlepszy do**: Generowania obrazów 4K z rozumowaniem i grounding
 
 ## Licencja
 
@@ -193,6 +225,7 @@ Stworzone przez am0n666
 
 - [Google Gemini API](https://ai.google.dev/)
 - [Oficjalna dokumentacja google-genai](https://googleapis.github.io/python-genai/)
+- [Gemini 3 Developer Guide](https://ai.google.dev/gemini-api/docs/gemini-3)
 - [Quickstart Guide](https://ai.google.dev/gemini-api/docs/quickstart)
 - [Dokumentacja PySimpleGUI](https://www.pysimplegui.org/)
 - [Repozytorium GitHub](https://github.com/am0n666/gemini-chat-app)

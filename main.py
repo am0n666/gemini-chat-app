@@ -3,7 +3,8 @@
 # 2. Prawidłowy import: from google import genai
 # 3. Użycie client.chats.create() dla czatów zamiast generate_content
 # 4. Obsługa Part.from_bytes dla obrazów
-# 5. Zachowanie całej funkcjonalności GUI
+# 5. Dodanie najnowszych modeli Gemini 3 (Pro, Flash, Pro Image)
+# 6. Zachowanie całej funkcjonalności GUI
 
 import PySimpleGUI as sg
 import os
@@ -104,7 +105,17 @@ class GeminiChatApp:
             [sg.Input(self.config.api_key, key='-API_KEY-', password_char='*', size=(35, 1))],
             [sg.Text('Model:')],
             [sg.Combo(
-                ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'],
+                [
+                    'gemini-3-flash-preview',
+                    'gemini-3-pro-preview', 
+                    'gemini-3-pro-image-preview',
+                    'gemini-2.5-flash',
+                    'gemini-2.5-pro',
+                    'gemini-2.0-flash-exp',
+                    'gemini-1.5-pro', 
+                    'gemini-1.5-flash', 
+                    'gemini-1.5-flash-8b'
+                ],
                 default_value=self.config.model_name,
                 key='-MODEL-',
                 size=(33, 1),
