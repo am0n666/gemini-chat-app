@@ -1,11 +1,10 @@
 # Reasoning:
-# 1. Pełen responsive layout - wszystko rozciąga się z oknem
-# 2. expand_x i expand_y dla wszystkich elementów
-# 3. Wykorzystanie całej przestrzeni okna
-# 4. Lepsze proporcje sidebar vs główna zawartość
-# 5. Dynamiczne dostosowywanie rozmiaru
+# 1. Migracja z PySimpleGUI na FreeSimpleGUI (open-source fork)
+# 2. Zmiana importu: import FreeSimpleGUI as sg
+# 3. Cała reszta kodu pozostaje bez zmian (100% kompatybilność)
+# 4. FreeSimpleGUI jest darmowe i nie wymaga specjalnej instalacji
 
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import os
 import json
 from pathlib import Path
@@ -422,7 +421,6 @@ class GeminiChatApp:
             finalize=True,
             icon=None,
             background_color=BG_COLOR,
-            # KLUCZOWE: pozwól na resizing zawartości
             margins=(0, 0)
         )
         

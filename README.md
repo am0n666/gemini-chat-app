@@ -1,6 +1,6 @@
 # Gemini Chat Application
 
-Pełnofunkcjonalna aplikacja do czatu z Google Gemini API, zbudowana w Pythonie z interfejsem graficznym PySimpleGUI.
+Pełnofunkcjonalna aplikacja do czatu z Google Gemini API, zbudowana w Pythonie z interfejsem graficznym FreeSimpleGUI.
 
 ## Funkcje
 
@@ -12,6 +12,7 @@ Pełnofunkcjonalna aplikacja do czatu z Google Gemini API, zbudowana w Pythonie 
 - 🔄 **Kontekst konwersacji** - Używa chat.send_message() dla zachowania kontekstu
 - ⭐ **Najnowsze modele** - Obsługa Gemini 3 Pro, Flash i Pro Image
 - 🔓 **Bez ograniczeń** - Domyślnie wyłączone wszystkie filtry bezpieczeństwa
+- 🔥 **Darmowe UI** - Używa FreeSimpleGUI (open-source fork PySimpleGUI)
 
 ## Instalacja
 
@@ -30,23 +31,17 @@ cd gemini-chat-app
 
 2. Zainstaluj wymagane biblioteki:
 
-**WAŻNE - PySimpleGUI wymaga specjalnej instalacji:**
-```bash
-# Najpierw odinstaluj starą wersję (jeśli jest)
-python -m pip uninstall PySimpleGUI
-python -m pip cache purge
-
-# Zainstaluj z prywatnego serwera PyPI
-python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
-
-# Zainstaluj pozostałe zależności
-pip install google-genai Pillow
-```
-
-**LUB zainstaluj wszystko z requirements.txt:**
 ```bash
 pip install -r requirements.txt
 ```
+
+LUB zainstaluj ręcznie:
+
+```bash
+pip install FreeSimpleGUI google-genai Pillow
+```
+
+**WAŻNE:** Aplikacja używa **FreeSimpleGUI** (nie PySimpleGUI). FreeSimpleGUI jest darmowym, open-source forkiem PySimpleGUI, który nie wymaga specjalnej instalacji ani licencji.
 
 3. (Opcjonalnie) Ustaw zmienną środowiskową z kluczem API:
 ```bash
@@ -105,6 +100,17 @@ Dokumentacja:
 - https://googleapis.github.io/python-genai/
 - https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl
 
+## FreeSimpleGUI vs PySimpleGUI
+
+**FreeSimpleGUI** jest open-source forkiem PySimpleGUI, który:
+- ✅ Jest całkowicie darmowy
+- ✅ Nie wymaga subskrypcji ani licencji
+- ✅ Ma 100% kompatybilność API z PySimpleGUI
+- ✅ Jest aktywnie rozwijany przez społeczność
+- ✅ Dostępny na PyPI: `pip install FreeSimpleGUI`
+
+Więcej informacji: https://github.com/spyoungtech/FreeSimpleGUI
+
 ## Struktura plików
 
 ```
@@ -148,25 +154,6 @@ Aplikacja **domyślnie wyłącza wszystkie filtry bezpieczeństwa** (`BLOCK_NONE
 - Brak blokowania treści niebezpiecznych (DANGEROUS_CONTENT)
 - Brak blokowania treści dotyczących uczciwości obywatelskiej (CIVIC_INTEGRITY)
 
-### Włączanie filtrów
-
-Jeśli chcesz włączyć standardowe filtry bezpieczeństwa:
-1. Przejdź do panelu "Ustawienia"
-2. Zaznacz checkbox "Włącz filtry bezpieczeństwa"
-3. Kliknij "Zapisz ustawienia"
-
-Po włączeniu filtrów, aplikacja użyje domyślnego progu `BLOCK_MEDIUM_AND_ABOVE` dla wszystkich kategorii.
-
-### Kategorie filtrów
-
-Gdy filtry są włączone, blokowane są treści z średnim lub wyższym prawdopodobieństwem bycia niebezpiecznymi w następujących kategoriach:
-
-1. **HARASSMENT** - Nękanie, negatywne komentarze
-2. **HATE_SPEECH** - Mowa nienawiści, treści obraźliwe
-3. **SEXUALLY_EXPLICIT** - Treści jednoznacznie seksualne
-4. **DANGEROUS_CONTENT** - Treści promujące szkodliwe działania
-5. **CIVIC_INTEGRITY** - Zapytania związane z wyborami
-
 Więcej informacji: https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl
 
 ## Obsługiwane typy plików
@@ -181,18 +168,16 @@ Więcej informacji: https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl
 
 ## Rozwiązywanie problemów
 
-### Problem z PySimpleGUI
+### Błąd importu FreeSimpleGUI
 ```
-AttributeError: module 'PySimpleGUI' has no attribute 'theme'
+ModuleNotFoundError: No module named 'FreeSimpleGUI'
 ```
-**Rozwiązanie:** Zainstaluj PySimpleGUI z prywatnego serwera:
+**Rozwiązanie:** Zainstaluj FreeSimpleGUI:
 ```bash
-python -m pip uninstall PySimpleGUI
-python -m pip cache purge
-python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
+pip install FreeSimpleGUI
 ```
 
-### Błąd importu
+### Błąd importu google.genai
 ```
 ImportError: cannot import name 'genai' from 'google'
 ```
@@ -207,38 +192,26 @@ pip install google-genai
 - Upewnij się że masz aktywne konto Google AI Studio
 - Sprawdź limity API na swoim koncie
 
-### Błąd wysyłania obrazów
-- Upewnij się że używasz modelu obsługującego wizję (np. gemini-3-pro-preview, gemini-3-flash-preview)
-- Sprawdź czy obrazy nie są zbyt duże (maks. 20MB)
-
-### Aplikacja nie zapisuje historii
-- Sprawdź uprawnienia do zapisu w folderze aplikacji
-- Upewnij się że plik `chats.json` nie jest otwarty w innym programie
-
 ## Changelog
+
+### v4.0 (2025-12-23)
+- 🔥 Migracja z PySimpleGUI na FreeSimpleGUI
+- 🎉 100% darmowe i open-source UI
+- ✅ Brak wymagania licencji lub subskrypcji
+- 📚 Zaktualizowana dokumentacja instalacji
 
 ### v3.1 (2025-12-23)
 - 🔓 Dodanie konfiguracji filtrów bezpieczeństwa
 - ✅ Domyślnie wyłączone wszystkie filtry (BLOCK_NONE)
 - ⚙️ Opcja włączania/wyłączania filtrów w GUI
-- 📚 Dodanie 5 kategorii bezpieczeństwa zgodnie z dokumentacją
 
 ### v3.0 (2025-12-23)
-- ⭐ Dodanie najnowszych modeli Gemini 3: Pro, Flash, Pro Image
+- ⭐ Dodanie najnowszych modeli Gemini 3
 - 🔄 Zmiana domyślnego modelu na gemini-3-flash-preview
-- 📚 Zaktualizowana lista modeli w dokumentacji
 
 ### v2.1 (2025-12-23)
 - ✅ PEŁNA migracja do najnowszej API `google-genai`
-- 🔄 Użycie `chat.send_message()` dla lepszego kontekstu konwersacji
-- 📚 Aktualizacja zgodnie z oficjalną dokumentacją
-
-### v2.0 (2025-12-23)
-- ✨ Migracja do nowej API `google-genai`
-- 🔧 Poprawki kompatybilności z PySimpleGUI
-
-### v1.0 (2025-12-23)
-- 🎉 Pierwsze wydanie
+- 🔄 Użycie `chat.send_message()` dla kontekstu
 
 ## Licencja
 
@@ -252,8 +225,7 @@ Stworzone przez am0n666
 
 - [Google Gemini API](https://ai.google.dev/)
 - [Oficjalna dokumentacja google-genai](https://googleapis.github.io/python-genai/)
+- [FreeSimpleGUI GitHub](https://github.com/spyoungtech/FreeSimpleGUI)
+- [FreeSimpleGUI Dokumentacja](https://freesimplegui.com/)
 - [Gemini 3 Developer Guide](https://ai.google.dev/gemini-api/docs/gemini-3)
-- [Safety Settings Guide](https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl)
-- [Quickstart Guide](https://ai.google.dev/gemini-api/docs/quickstart)
-- [Dokumentacja PySimpleGUI](https://www.pysimplegui.org/)
 - [Repozytorium GitHub](https://github.com/am0n666/gemini-chat-app)
