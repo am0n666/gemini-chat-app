@@ -1,7 +1,9 @@
 # Reasoning:
-# 1. Migracja z google.generativeai na google.genai (nowa API)
-# 2. Poprawki dla PySimpleGUI - użycie PySimpleGUI.PySimpleGUI zamiast sg.theme
-# 3. Zachowanie wszystkich funkcji aplikacji
+# 1. Użycie oficjalnej najnowszej biblioteki google-genai zgodnie z dokumentacją
+# 2. Prawidłowy import: from google import genai
+# 3. Użycie client.chats.create() dla czatów zamiast generate_content
+# 4. Obsługa Part.from_bytes dla obrazów
+# 5. Zachowanie całej funkcjonalności GUI
 
 import PySimpleGUI as sg
 import os
@@ -28,36 +30,41 @@ class GeminiChatApp:
         self.chat_manager = ChatManager()
         self.current_chat_id = None
         self.client = None
-        self.model = None
+        self.chat_session = None
         
         # Inicjalizacja Gemini API
         if self.config.api_key:
             self.client = genai.Client(api_key=self.config.api_key)
-            self.update_model()
         
-    def update_model(self):
-        """Aktualizuj model Gemini na podstawie konfiguracji"""
+    def create_chat_session(self):
+        """Utwórz nową sesję czatu"""
+        if not self.client:
+            return None
+        
         try:
-            if not self.client:
-                if self.config.api_key:
-                    self.client = genai.Client(api_key=self.config.api_key)
-            
             # Konfiguracja generowania
-            self.generation_config = types.GenerateContentConfig(
+            config = types.GenerateContentConfig(
                 temperature=self.config.temperature,
                 top_p=self.config.top_p,
                 top_k=self.config.top_k,
                 max_output_tokens=self.config.max_tokens,
             )
             
-            # System instruction
+            # Dodaj system instruction jeśli jest
             if self.config.system_instruction:
-                self.generation_config.system_instruction = self.config.system_instruction
+                config.system_instruction = self.config.system_instruction
             
-            self.model = self.config.model_name
+            # Utwórz sesję czatu
+            self.chat_session = self.client.chats.create(
+                model=self.config.model_name,
+                config=config
+            )
+            
+            return self.chat_session
             
         except Exception as e:
-            sg.popup_error(f"Błąd inicjalizacji modelu: {str(e)}")
+            sg.popup_error(f"Błąd tworzenia sesji czatu: {str(e)}")
+            return None
     
     def create_layout(self):
         """Utwórz layout aplikacji"""
@@ -189,6 +196,12 @@ class GeminiChatApp:
         window.refresh()
         
         try:
+            # Jeśli nie ma sesji czatu, utwórz nową
+            if not self.chat_session:
+                self.chat_session = self.create_chat_session()
+                if not self.chat_session:
+                    return
+            
             # Przygotuj zawartość wiadomości
             content_parts = []
             
@@ -211,7 +224,7 @@ class GeminiChatApp:
                         }
                         
                         if ext in mime_types:
-                            # To jest obraz
+                            # To jest obraz - użyj Part.from_bytes
                             part = types.Part.from_bytes(
                                 data=file_data,
                                 mime_type=mime_types[ext]
@@ -220,20 +233,16 @@ class GeminiChatApp:
                         else:
                             # Plik tekstowy
                             with open(file_path, 'r', encoding='utf-8') as f:
-                                content_parts.append(types.Part.from_text(f"[Zawartość pliku {os.path.basename(file_path)}]:\n{f.read()}"))
+                                content_parts.append(f"[Zawartość pliku {os.path.basename(file_path)}]:\n{f.read()}")
                     except Exception as e:
                         print(f"Błąd przetwarzania pliku {file_path}: {e}")
             
             # Dodaj tekst wiadomości
             if message.strip():
-                content_parts.append(types.Part.from_text(message))
+                content_parts.append(message)
             
-            # Wyślij do Gemini
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=content_parts,
-                config=self.generation_config
-            )
+            # Wyślij do Gemini używając chat session
+            response = self.chat_session.send_message(content_parts)
             
             # Dodaj odpowiedź modelu
             self.chat_manager.add_message(
@@ -275,6 +284,8 @@ class GeminiChatApp:
                 chat_name = sg.popup_get_text('Nazwa nowego czatu:', default_text=f'Czat {len(self.chat_manager.chats) + 1}')
                 if chat_name:
                     self.current_chat_id = self.chat_manager.create_chat(chat_name)
+                    # Utwórz nową sesję czatu dla nowej konwersacji
+                    self.chat_session = self.create_chat_session()
                     window['-CHAT_LIST-'].update(self.chat_manager.get_chat_list())
                     self.update_chat_display(window)
             
@@ -285,6 +296,8 @@ class GeminiChatApp:
                     for chat_id, chat in self.chat_manager.chats.items():
                         if chat['name'] == chat_name:
                             self.current_chat_id = chat_id
+                            # Utwórz nową sesję dla wybranego czatu
+                            self.chat_session = self.create_chat_session()
                             self.update_chat_display(window)
                             attached_files = []
                             break
@@ -296,6 +309,7 @@ class GeminiChatApp:
                     if confirm == 'Yes':
                         self.chat_manager.delete_chat(self.current_chat_id)
                         self.current_chat_id = None
+                        self.chat_session = None
                         window['-CHAT_LIST-'].update(self.chat_manager.get_chat_list())
                         window['-CHAT_HISTORY-'].update('')
                         window['-CHAT_TITLE-'].update('Gemini Chat')
@@ -336,7 +350,9 @@ class GeminiChatApp:
                 # Rekonfiguruj API
                 if self.config.api_key:
                     self.client = genai.Client(api_key=self.config.api_key)
-                    self.update_model()
+                    # Utwórz nową sesję z nowymi ustawieniami
+                    if self.current_chat_id:
+                        self.chat_session = self.create_chat_session()
                     sg.popup('Ustawienia zapisane!')
             
             # Reset ustawień

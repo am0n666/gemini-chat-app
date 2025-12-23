@@ -9,12 +9,13 @@ Pełnofunkcjonalna aplikacja do czatu z Google Gemini API, zbudowana w Pythonie 
 - ⚙️ **Pełna konfiguracja** - Dostosuj model, temperaturę, instrukcje systemowe i więcej
 - 💾 **Automatyczny zapis** - Historia czatów zapisywana lokalnie w JSON
 - 🎨 **Przyjazny interfejs** - Intuicyjny GUI z listą czatów, historią i ustawieniami
+- 🔄 **Kontekst konwersacji** - Używa chat.send_message() dla zachowania kontekstu
 
 ## Instalacja
 
 ### Wymagania
 
-- Python 3.8 lub nowszy
+- Python 3.9 lub nowszy
 - Klucz API Google Gemini ([uzyskaj tutaj](https://aistudio.google.com/apikey))
 
 ### Kroki instalacji
@@ -38,6 +39,11 @@ python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/instal
 
 # Zainstaluj pozostałe zależności
 pip install google-genai Pillow
+```
+
+**LUB zainstaluj wszystko z requirements.txt:**
+```bash
+pip install -r requirements.txt
 ```
 
 3. (Opcjonalnie) Ustaw zmienną środowiskową z kluczem API:
@@ -79,19 +85,15 @@ python main.py
    - Dostosuj parametry: temperatura, max tokens, top_p, top_k
    - Dodaj instrukcje systemowe dla modelu
 
-## Migracja do nowej API
+## Najnowsza API
 
-Aplikacja używa nowej biblioteki `google-genai` (zamiast przestarzałej `google.generativeai`). Jeśli migrowano z wcześniejszej wersji:
+Aplikacja używa **najnowszej** biblioteki `google-genai` zgodnie z oficjalną dokumentacją:
+- Import: `from google import genai`
+- Użycie `client.chats.create()` dla sesji czatu
+- Metoda `chat.send_message()` dla zachowania kontekstu konwersacji
+- `types.Part.from_bytes()` dla obrazów
 
-1. Odinstaluj starą bibliotekę:
-```bash
-pip uninstall google-generativeai
-```
-
-2. Zainstaluj nową:
-```bash
-pip install google-genai
-```
+Dokumentacja: https://googleapis.github.io/python-genai/
 
 ## Struktura plików
 
@@ -138,11 +140,11 @@ python -m pip cache purge
 python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
 ```
 
-### Problem z przestarzałą API
+### Błąd importu
 ```
-FutureWarning: All support for the `google.generativeai` package has ended
+ImportError: cannot import name 'genai' from 'google'
 ```
-**Rozwiązanie:** Zaktualizowano do `google-genai`. Zainstaluj najnowszą wersję:
+**Rozwiązanie:** Upewnij się że zainstalowałeś `google-genai` (nie `google-generativeai`):
 ```bash
 pip uninstall google-generativeai
 pip install google-genai
@@ -162,6 +164,11 @@ pip install google-genai
 - Upewnij się że plik `chats.json` nie jest otwarty w innym programie
 
 ## Changelog
+
+### v2.1 (2025-12-23)
+- ✅ PEŁNA migracja do najnowszej API `google-genai`
+- 🔄 Użycie `chat.send_message()` dla lepszego kontekstu konwersacji
+- 📚 Aktualizacja zgodnie z oficjalną dokumentacją googleapis.github.io/python-genai/
 
 ### v2.0 (2025-12-23)
 - ✨ Migracja do nowej API `google-genai`
@@ -185,6 +192,7 @@ Stworzone przez am0n666
 ## Linki
 
 - [Google Gemini API](https://ai.google.dev/)
-- [Nowa dokumentacja google-genai](https://github.com/googleapis/python-genai)
+- [Oficjalna dokumentacja google-genai](https://googleapis.github.io/python-genai/)
+- [Quickstart Guide](https://ai.google.dev/gemini-api/docs/quickstart)
 - [Dokumentacja PySimpleGUI](https://www.pysimplegui.org/)
 - [Repozytorium GitHub](https://github.com/am0n666/gemini-chat-app)
