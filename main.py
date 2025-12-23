@@ -1,9 +1,10 @@
 # Reasoning:
-# 1. Użycie oficjalnej najnowszej biblioteki google-genai zgodnie z dokumentacją
-# 2. Dodanie safety_settings z BLOCK_NONE dla wszystkich 5 kategorii
-# 3. Kategorie: HARASSMENT, HATE_SPEECH, SEXUALLY_EXPLICIT, DANGEROUS_CONTENT, CIVIC_INTEGRITY
-# 4. Możliwość włączenia/wyłączenia filtrów w GUI
-# 5. Zgodnie z dokumentacją: https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl
+# 1. Nowoczesny, profesjonalny interfejs UI
+# 2. Lepsze kolory, czcionki, spacing
+# 3. Tab-based interface zamiast kolumn obok siebie
+# 4. Status bar na dole
+# 5. Ikony i lepsze przyciski
+# 6. Bardziej intuicyjna nawigacja
 
 import PySimpleGUI as sg
 import os
@@ -18,11 +19,15 @@ import io
 from chat_manager import ChatManager
 from config import Config
 
-# Konfiguracja PySimpleGUI
-try:
-    sg.theme('DarkBlue3')
-except:
-    pass  # Starsza wersja PySimpleGUI może nie mieć theme
+# Nowoczesny motyw
+sg.theme('DarkGrey13')
+
+# Kolory
+BG_COLOR = '#1e1e1e'
+INPUT_BG = '#2d2d2d'
+BUTTON_COLOR = ('#ffffff', '#0d7377')
+TEXT_COLOR = '#e0e0e0'
+ACCENT_COLOR = '#0d7377'
 
 class GeminiChatApp:
     def __init__(self):
@@ -37,9 +42,8 @@ class GeminiChatApp:
             self.client = genai.Client(api_key=self.config.api_key)
     
     def get_safety_settings(self):
-        """Pobierz ustawienia bezpieczeństwa - wyłącz wszystkie filtry jeśli użytkownik tego chce"""
+        """Pobierz ustawienia bezpieczeństwa"""
         if not self.config.enable_safety_filters:
-            # Wyłącz wszystkie filtry bezpieczeństwa
             return [
                 types.SafetySetting(
                     category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -63,7 +67,6 @@ class GeminiChatApp:
                 ),
             ]
         else:
-            # Użyj domyślnych filtrów (BLOCK_MEDIUM_AND_ABOVE)
             return [
                 types.SafetySetting(
                     category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -93,20 +96,17 @@ class GeminiChatApp:
             return None
         
         try:
-            # Konfiguracja generowania
             config = types.GenerateContentConfig(
                 temperature=self.config.temperature,
                 top_p=self.config.top_p,
                 top_k=self.config.top_k,
                 max_output_tokens=self.config.max_tokens,
-                safety_settings=self.get_safety_settings(),  # Dodaj ustawienia bezpieczeństwa
+                safety_settings=self.get_safety_settings(),
             )
             
-            # Dodaj system instruction jeśli jest
             if self.config.system_instruction:
                 config.system_instruction = self.config.system_instruction
             
-            # Utwórz sesję czatu
             self.chat_session = self.client.chats.create(
                 model=self.config.model_name,
                 config=config
@@ -115,110 +115,204 @@ class GeminiChatApp:
             return self.chat_session
             
         except Exception as e:
-            sg.popup_error(f"Błąd tworzenia sesji czatu: {str(e)}")
+            sg.popup_error(f"Błąd tworzenia sesji: {str(e)}", title="Błąd")
             return None
     
     def create_layout(self):
-        """Utwórz layout aplikacji"""
-        # Lista czatów (sidebar)
-        chat_list_column = [
-            [sg.Text('Czaty', font=('Helvetica', 14, 'bold'))],
-            [sg.Listbox(
-                values=self.chat_manager.get_chat_list(),
-                size=(30, 25),
-                key='-CHAT_LIST-',
-                enable_events=True,
-                select_mode=sg.LISTBOX_SELECT_MODE_SINGLE
-            )],
-            [sg.Button('Nowy czat', size=(12, 1)), sg.Button('Usuń czat', size=(12, 1))],
+        """Utwórz nowoczesny layout aplikacji"""
+        
+        # Główny tab czatu
+        chat_tab = [
+            # Nagłówek
+            [sg.Frame('', [
+                [sg.Text('Gemini Chat', font=('Segoe UI', 18, 'bold'), text_color=ACCENT_COLOR, pad=(10, 10)),
+                 sg.Push(),
+                 sg.Text('', key='-CHAT_NAME-', font=('Segoe UI', 12), text_color=TEXT_COLOR, pad=(10, 10))]
+            ], relief=sg.RELIEF_FLAT, background_color=BG_COLOR, pad=(0, 0))],
+            
+            # Sidebar z listą czatów
+            [sg.Column([
+                [sg.Text('Twoje czaty', font=('Segoe UI', 11, 'bold'), pad=(10, 10))],
+                [sg.Listbox(
+                    values=self.chat_manager.get_chat_list(),
+                    size=(35, 20),
+                    key='-CHAT_LIST-',
+                    enable_events=True,
+                    font=('Segoe UI', 10),
+                    background_color=INPUT_BG,
+                    text_color=TEXT_COLOR,
+                    highlight_background_color=ACCENT_COLOR,
+                    pad=(10, 5)
+                )],
+                [sg.Button('+ Nowy czat', key='-NEW_CHAT-', size=(15, 1), button_color=BUTTON_COLOR, font=('Segoe UI', 9, 'bold'), pad=(10, 5)),
+                 sg.Button('✖ Usuń', key='-DELETE_CHAT-', size=(10, 1), button_color=('#ffffff', '#c74440'), font=('Segoe UI', 9), pad=(5, 5))]
+            ], vertical_alignment='top', background_color=BG_COLOR, pad=(10, 10)),
+            
+            # Główne okno czatu
+            sg.Column([
+                [sg.Multiline(
+                    size=(90, 22),
+                    key='-CHAT_HISTORY-',
+                    disabled=True,
+                    autoscroll=True,
+                    font=('Consolas', 10),
+                    background_color=INPUT_BG,
+                    text_color=TEXT_COLOR,
+                    border_width=0,
+                    pad=(10, 10)
+                )],
+                
+                # Input area
+                [sg.Frame('', [
+                    [sg.Text('Załączone:', font=('Segoe UI', 9), pad=(5, 5)), 
+                     sg.Text('', size=(60, 1), key='-ATTACHED_FILES-', font=('Segoe UI', 9), text_color='#6c757d')],
+                    [sg.Multiline(
+                        size=(85, 4),
+                        key='-MESSAGE-',
+                        font=('Segoe UI', 10),
+                        background_color=INPUT_BG,
+                        text_color=TEXT_COLOR,
+                        border_width=1,
+                        pad=(5, 5),
+                        enter_submits=False
+                    )],
+                    [sg.Button('📎 Załącz', key='-ATTACH-', button_color=('#ffffff', '#6c757d'), font=('Segoe UI', 9), pad=(5, 5)),
+                     sg.Push(),
+                     sg.Button('➤ Wyślij', key='-SEND-', size=(12, 1), button_color=BUTTON_COLOR, font=('Segoe UI', 10, 'bold'), pad=(5, 5))]
+                ], relief=sg.RELIEF_FLAT, background_color=BG_COLOR, pad=(10, 10))]
+            ], vertical_alignment='top', background_color=BG_COLOR, expand_x=True, expand_y=True)]
         ]
         
-        # Główne okno czatu
-        chat_column = [
-            [sg.Text('Gemini Chat', font=('Helvetica', 16, 'bold'), key='-CHAT_TITLE-')],
-            [sg.Multiline(
-                size=(80, 25),
-                key='-CHAT_HISTORY-',
-                disabled=True,
-                autoscroll=True,
-                font=('Courier New', 10)
-            )],
-            [sg.Text('Załączone pliki:'), sg.Text('', size=(60, 1), key='-ATTACHED_FILES-')],
-            [sg.Input(key='-MESSAGE-', size=(65, 1), enable_events=True),
-             sg.Button('📎', key='-ATTACH-', size=(3, 1)),
-             sg.Button('Wyślij', bind_return_key=True, size=(8, 1))],
+        # Tab ustawień
+        settings_tab = [
+            [sg.Column([
+                [sg.Text('Konfiguracja API', font=('Segoe UI', 14, 'bold'), pad=(10, 20))],
+                
+                [sg.Frame('Klucz API', [
+                    [sg.Input(
+                        self.config.api_key,
+                        key='-API_KEY-',
+                        password_char='*',
+                        size=(60, 1),
+                        font=('Segoe UI', 10),
+                        background_color=INPUT_BG,
+                        text_color=TEXT_COLOR,
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 10))],
+                
+                [sg.Frame('Wybór modelu', [
+                    [sg.Combo(
+                        ['gemini-3-flash-preview', 'gemini-3-pro-preview', 'gemini-3-pro-image-preview',
+                         'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash-exp',
+                         'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'],
+                        default_value=self.config.model_name,
+                        key='-MODEL-',
+                        size=(58, 1),
+                        font=('Segoe UI', 10),
+                        background_color=INPUT_BG,
+                        readonly=True,
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 10))],
+                
+                [sg.Text('Parametry generowania', font=('Segoe UI', 12, 'bold'), pad=(10, 20))],
+                
+                [sg.Frame('Temperatura', [
+                    [sg.Slider(
+                        range=(0.0, 2.0),
+                        default_value=self.config.temperature,
+                        resolution=0.1,
+                        orientation='h',
+                        size=(50, 15),
+                        key='-TEMPERATURE-',
+                        font=('Segoe UI', 9),
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 5))],
+                
+                [sg.Frame('Max Tokens', [
+                    [sg.Input(
+                        str(self.config.max_tokens),
+                        key='-MAX_TOKENS-',
+                        size=(20, 1),
+                        font=('Segoe UI', 10),
+                        background_color=INPUT_BG,
+                        text_color=TEXT_COLOR,
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 5))],
+                
+                [sg.Frame('Top P', [
+                    [sg.Slider(
+                        range=(0.0, 1.0),
+                        default_value=self.config.top_p,
+                        resolution=0.05,
+                        orientation='h',
+                        size=(50, 15),
+                        key='-TOP_P-',
+                        font=('Segoe UI', 9),
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 5))],
+                
+                [sg.Frame('Top K', [
+                    [sg.Input(
+                        str(self.config.top_k),
+                        key='-TOP_K-',
+                        size=(20, 1),
+                        font=('Segoe UI', 10),
+                        background_color=INPUT_BG,
+                        text_color=TEXT_COLOR,
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 5))],
+                
+                [sg.Text('Zaawansowane', font=('Segoe UI', 12, 'bold'), pad=(10, 20))],
+                
+                [sg.Frame('Filtry bezpieczeństwa', [
+                    [sg.Checkbox(
+                        'Włącz filtry bezpieczeństwa (domyślnie wyłączone)',
+                        default=self.config.enable_safety_filters,
+                        key='-SAFETY_FILTERS-',
+                        font=('Segoe UI', 9),
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 10))],
+                
+                [sg.Frame('Instrukcje systemowe', [
+                    [sg.Multiline(
+                        self.config.system_instruction,
+                        key='-SYSTEM_INSTRUCTION-',
+                        size=(58, 6),
+                        font=('Segoe UI', 9),
+                        background_color=INPUT_BG,
+                        text_color=TEXT_COLOR,
+                        pad=(10, 10)
+                    )]
+                ], font=('Segoe UI', 10), pad=(10, 10))],
+                
+                [sg.Button('✔ Zapisz ustawienia', key='-SAVE_SETTINGS-', size=(20, 1), button_color=BUTTON_COLOR, font=('Segoe UI', 10, 'bold'), pad=(10, 20)),
+                 sg.Button('↻ Reset', key='-RESET_SETTINGS-', size=(15, 1), button_color=('#ffffff', '#6c757d'), font=('Segoe UI', 10), pad=(5, 20))]
+                
+            ], scrollable=True, vertical_scroll_only=True, size=(750, 600), background_color=BG_COLOR, pad=(20, 20))]
         ]
         
-        # Panel ustawień
-        settings_column = [
-            [sg.Text('Ustawienia', font=('Helvetica', 14, 'bold'))],
-            [sg.Text('API Key:')],
-            [sg.Input(self.config.api_key, key='-API_KEY-', password_char='*', size=(35, 1))],
-            [sg.Text('Model:')],
-            [sg.Combo(
-                [
-                    'gemini-3-flash-preview',
-                    'gemini-3-pro-preview', 
-                    'gemini-3-pro-image-preview',
-                    'gemini-2.5-flash',
-                    'gemini-2.5-pro',
-                    'gemini-2.0-flash-exp',
-                    'gemini-1.5-pro', 
-                    'gemini-1.5-flash', 
-                    'gemini-1.5-flash-8b'
-                ],
-                default_value=self.config.model_name,
-                key='-MODEL-',
-                size=(33, 1),
-                readonly=True
-            )],
-            [sg.Text('Temperatura:')],
-            [sg.Slider(
-                range=(0.0, 2.0),
-                default_value=self.config.temperature,
-                resolution=0.1,
-                orientation='h',
-                size=(30, 15),
-                key='-TEMPERATURE-'
-            )],
-            [sg.Text('Max Tokens:')],
-            [sg.Input(str(self.config.max_tokens), key='-MAX_TOKENS-', size=(35, 1))],
-            [sg.Text('Top P:')],
-            [sg.Slider(
-                range=(0.0, 1.0),
-                default_value=self.config.top_p,
-                resolution=0.05,
-                orientation='h',
-                size=(30, 15),
-                key='-TOP_P-'
-            )],
-            [sg.Text('Top K:')],
-            [sg.Input(str(self.config.top_k), key='-TOP_K-', size=(35, 1))],
-            [sg.HorizontalSeparator()],
-            [sg.Text('Bezpieczeństwo:', font=('Helvetica', 11, 'bold'))],
-            [sg.Checkbox(
-                'Włącz filtry bezpieczeństwa (domyślnie: wyłączone)',
-                default=self.config.enable_safety_filters,
-                key='-SAFETY_FILTERS-',
-                tooltip='Wyłączenie filtrów pozwala na wszystkie treści bez blokowania'
-            )],
-            [sg.HorizontalSeparator()],
-            [sg.Text('Instrukcje systemowe:')],
-            [sg.Multiline(
-                self.config.system_instruction,
-                key='-SYSTEM_INSTRUCTION-',
-                size=(35, 8)
-            )],
-            [sg.Button('Zapisz ustawienia', size=(15, 1)), sg.Button('Reset', size=(15, 1))],
-        ]
-        
-        # Layout główny z zakładkami
+        # Główny layout z tabami
         layout = [
-            [sg.Column(chat_list_column, vertical_alignment='top'),
-             sg.VSeperator(),
-             sg.Column(chat_column, vertical_alignment='top'),
-             sg.VSeperator(),
-             sg.Column(settings_column, vertical_alignment='top', scrollable=True, size=(400, 600))]
+            [sg.TabGroup([
+                [sg.Tab('💬 Czat', chat_tab, font=('Segoe UI', 11), background_color=BG_COLOR),
+                 sg.Tab('⚙️ Ustawienia', settings_tab, font=('Segoe UI', 11), background_color=BG_COLOR)]
+            ], font=('Segoe UI', 10), tab_background_color=INPUT_BG, selected_background_color=ACCENT_COLOR, background_color=BG_COLOR, pad=(0, 0))],
+            
+            # Status bar
+            [sg.StatusBar(
+                f'Model: {self.config.model_name} | Filtry: {"Włączone" if self.config.enable_safety_filters else "Wyłączone"}',
+                size=(100, 1),
+                key='-STATUS-',
+                font=('Segoe UI', 9),
+                pad=(0, 0)
+            )]
         ]
         
         return layout
@@ -228,22 +322,29 @@ class GeminiChatApp:
         if self.current_chat_id:
             chat = self.chat_manager.get_chat(self.current_chat_id)
             if chat:
-                window['-CHAT_TITLE-'].update(f"Czat: {chat['name']}")
+                window['-CHAT_NAME-'].update(f"💬 {chat['name']}")
                 
-                # Formatowanie historii
                 history_text = ""
                 for msg in chat['messages']:
-                    role = "Ty" if msg['role'] == 'user' else "Gemini"
+                    role = "[TY]" if msg['role'] == 'user' else "[GEMINI]"
                     timestamp = datetime.fromisoformat(msg['timestamp']).strftime('%H:%M')
                     
-                    # Sprawdź czy są załączniki
                     attachments = ""
                     if 'attachments' in msg and msg['attachments']:
-                        attachments = f" [📎 {len(msg['attachments'])} plik(ów)]"
+                        attachments = f" 📎({len(msg['attachments'])})"
                     
-                    history_text += f"[{timestamp}] {role}{attachments}:\n{msg['content']}\n\n"
+                    history_text += f"{timestamp} {role}{attachments}\n{msg['content']}\n\n{'='*80}\n\n"
                 
                 window['-CHAT_HISTORY-'].update(history_text)
+    
+    def update_status_bar(self, window, message=None):
+        """Aktualizuj status bar"""
+        if message:
+            window['-STATUS-'].update(message)
+        else:
+            window['-STATUS-'].update(
+                f'Model: {self.config.model_name} | Filtry: {"Włączone" if self.config.enable_safety_filters else "Wyłączone"}'
+            )
     
     def send_message(self, window, message, attachments=None):
         """Wyślij wiadomość do Gemini API"""
@@ -251,40 +352,30 @@ class GeminiChatApp:
             return
         
         if not self.client:
-            sg.popup_error("Skonfiguruj API Key w ustawieniach!")
+            sg.popup_error("Skonfiguruj API Key w zakładce Ustawienia!", title="Błąd")
             return
         
-        # Dodaj wiadomość użytkownika
-        self.chat_manager.add_message(
-            self.current_chat_id,
-            'user',
-            message,
-            attachments
-        )
+        self.chat_manager.add_message(self.current_chat_id, 'user', message, attachments)
         self.update_chat_display(window)
         window['-MESSAGE-'].update('')
         window['-ATTACHED_FILES-'].update('')
+        self.update_status_bar(window, 'Wysyłanie...')
         window.refresh()
         
         try:
-            # Jeśli nie ma sesji czatu, utwórz nową
             if not self.chat_session:
                 self.chat_session = self.create_chat_session()
                 if not self.chat_session:
                     return
             
-            # Przygotuj zawartość wiadomości
             content_parts = []
             
-            # Dodaj załączniki (obrazy)
             if attachments:
                 for file_path in attachments:
                     try:
-                        # Sprawdź czy to obraz
                         with open(file_path, 'rb') as f:
                             file_data = f.read()
                         
-                        # Określ MIME type
                         ext = os.path.splitext(file_path)[1].lower()
                         mime_types = {
                             '.png': 'image/png',
@@ -295,51 +386,42 @@ class GeminiChatApp:
                         }
                         
                         if ext in mime_types:
-                            # To jest obraz - użyj Part.from_bytes
-                            part = types.Part.from_bytes(
-                                data=file_data,
-                                mime_type=mime_types[ext]
-                            )
+                            part = types.Part.from_bytes(data=file_data, mime_type=mime_types[ext])
                             content_parts.append(part)
                         else:
-                            # Plik tekstowy
                             with open(file_path, 'r', encoding='utf-8') as f:
-                                content_parts.append(f"[Zawartość pliku {os.path.basename(file_path)}]:\n{f.read()}")
+                                content_parts.append(f"[Plik: {os.path.basename(file_path)}]\n{f.read()}")
                     except Exception as e:
-                        print(f"Błąd przetwarzania pliku {file_path}: {e}")
+                        print(f"Błąd pliku {file_path}: {e}")
             
-            # Dodaj tekst wiadomości
             if message.strip():
                 content_parts.append(message)
             
-            # Wyślij do Gemini używając chat session
             response = self.chat_session.send_message(content_parts)
             
-            # Dodaj odpowiedź modelu
-            self.chat_manager.add_message(
-                self.current_chat_id,
-                'model',
-                response.text
-            )
+            self.chat_manager.add_message(self.current_chat_id, 'model', response.text)
             self.update_chat_display(window)
+            self.update_status_bar(window, 'Gotowe!')
             
         except Exception as e:
-            sg.popup_error(f"Błąd wysyłania wiadomości: {str(e)}")
-            # Usuń ostatnią wiadomość użytkownika jeśli wystąpił błąd
+            sg.popup_error(f"Błąd: {str(e)}", title="Błąd komunikacji")
             if self.current_chat_id:
                 chat = self.chat_manager.get_chat(self.current_chat_id)
                 if chat and chat['messages']:
                     chat['messages'].pop()
                     self.chat_manager.save_chats()
+            self.update_status_bar(window)
     
     def run(self):
         """Uruchom aplikację"""
         window = sg.Window(
-            'Gemini Chat Application',
+            'Gemini Chat Pro',
             self.create_layout(),
-            size=(1400, 700),
+            size=(1200, 750),
             resizable=True,
-            finalize=True
+            finalize=True,
+            icon=None,
+            background_color=BG_COLOR
         )
         
         attached_files = []
@@ -350,42 +432,36 @@ class GeminiChatApp:
             if event == sg.WIN_CLOSED:
                 break
             
-            # Nowy czat
-            elif event == 'Nowy czat':
-                chat_name = sg.popup_get_text('Nazwa nowego czatu:', default_text=f'Czat {len(self.chat_manager.chats) + 1}')
+            elif event == '-NEW_CHAT-':
+                chat_name = sg.popup_get_text('Nazwa nowego czatu:', default_text=f'Czat {len(self.chat_manager.chats) + 1}', font=('Segoe UI', 10))
                 if chat_name:
                     self.current_chat_id = self.chat_manager.create_chat(chat_name)
-                    # Utwórz nową sesję czatu dla nowej konwersacji
                     self.chat_session = self.create_chat_session()
                     window['-CHAT_LIST-'].update(self.chat_manager.get_chat_list())
                     self.update_chat_display(window)
             
-            # Wybór czatu
             elif event == '-CHAT_LIST-':
                 if values['-CHAT_LIST-']:
                     chat_name = values['-CHAT_LIST-'][0]
                     for chat_id, chat in self.chat_manager.chats.items():
                         if chat['name'] == chat_name:
                             self.current_chat_id = chat_id
-                            # Utwórz nową sesję dla wybranego czatu
                             self.chat_session = self.create_chat_session()
                             self.update_chat_display(window)
                             attached_files = []
                             break
             
-            # Usuń czat
-            elif event == 'Usuń czat':
+            elif event == '-DELETE_CHAT-':
                 if self.current_chat_id:
-                    confirm = sg.popup_yes_no('Czy na pewno usunąć ten czat?')
+                    confirm = sg.popup_yes_no('Czy na pewno usunąć ten czat?', font=('Segoe UI', 10), title='Potwierdzenie')
                     if confirm == 'Yes':
                         self.chat_manager.delete_chat(self.current_chat_id)
                         self.current_chat_id = None
                         self.chat_session = None
                         window['-CHAT_LIST-'].update(self.chat_manager.get_chat_list())
                         window['-CHAT_HISTORY-'].update('')
-                        window['-CHAT_TITLE-'].update('Gemini Chat')
+                        window['-CHAT_NAME-'].update('')
             
-            # Załącz plik
             elif event == '-ATTACH-':
                 files = sg.popup_get_file(
                     'Wybierz pliki',
@@ -398,17 +474,15 @@ class GeminiChatApp:
                     attached_files.extend(files)
                     window['-ATTACHED_FILES-'].update(', '.join([os.path.basename(f) for f in attached_files]))
             
-            # Wyślij wiadomość
-            elif event == 'Wyślij' or (event == '-MESSAGE-' and values['-MESSAGE-'].endswith('\n')):
+            elif event == '-SEND-':
                 if self.current_chat_id:
                     msg = values['-MESSAGE-'].strip()
                     self.send_message(window, msg, attached_files if attached_files else None)
                     attached_files = []
                 else:
-                    sg.popup('Utwórz lub wybierz czat!')
+                    sg.popup('Utwórz lub wybierz czat!', font=('Segoe UI', 10), title='Info')
             
-            # Zapisz ustawienia
-            elif event == 'Zapisz ustawienia':
+            elif event == '-SAVE_SETTINGS-':
                 self.config.api_key = values['-API_KEY-']
                 self.config.model_name = values['-MODEL-']
                 self.config.temperature = values['-TEMPERATURE-']
@@ -419,16 +493,14 @@ class GeminiChatApp:
                 self.config.enable_safety_filters = values['-SAFETY_FILTERS-']
                 self.config.save()
                 
-                # Rekonfiguruj API
                 if self.config.api_key:
                     self.client = genai.Client(api_key=self.config.api_key)
-                    # Utwórz nową sesję z nowymi ustawieniami
                     if self.current_chat_id:
                         self.chat_session = self.create_chat_session()
-                    sg.popup('Ustawienia zapisane!')
+                    self.update_status_bar(window)
+                    sg.popup('Ustawienia zapisane!', font=('Segoe UI', 10), title='Sukces')
             
-            # Reset ustawień
-            elif event == 'Reset':
+            elif event == '-RESET_SETTINGS-':
                 self.config = Config()
                 window['-API_KEY-'].update(self.config.api_key)
                 window['-MODEL-'].update(self.config.model_name)
@@ -438,7 +510,8 @@ class GeminiChatApp:
                 window['-TOP_K-'].update(self.config.top_k)
                 window['-SYSTEM_INSTRUCTION-'].update(self.config.system_instruction)
                 window['-SAFETY_FILTERS-'].update(self.config.enable_safety_filters)
-                sg.popup('Ustawienia zresetowane!')
+                self.update_status_bar(window)
+                sg.popup('Ustawienia zresetowane!', font=('Segoe UI', 10), title='Info')
         
         window.close()
 
