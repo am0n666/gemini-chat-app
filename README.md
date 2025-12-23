@@ -11,6 +11,7 @@ Pełnofunkcjonalna aplikacja do czatu z Google Gemini API, zbudowana w Pythonie 
 - 🎨 **Przyjazny interfejs** - Intuicyjny GUI z listą czatów, historią i ustawieniami
 - 🔄 **Kontekst konwersacji** - Używa chat.send_message() dla zachowania kontekstu
 - ⭐ **Najnowsze modele** - Obsługa Gemini 3 Pro, Flash i Pro Image
+- 🔓 **Bez ograniczeń** - Domyślnie wyłączone wszystkie filtry bezpieczeństwa
 
 ## Instalacja
 
@@ -86,6 +87,11 @@ python main.py
    - Dostosuj parametry: temperatura, max tokens, top_p, top_k
    - Dodaj instrukcje systemowe dla modelu
 
+6. **Ustawienia bezpieczeństwa:**
+   - Domyślnie wszystkie filtry bezpieczeństwa są **WYŁĄCZONE**
+   - Model może odpowiadać bez żadnych ograniczeń
+   - Jeśli chcesz włączyć filtry, zaznacz checkbox "Włącz filtry bezpieczeństwa"
+
 ## Najnowsza API
 
 Aplikacja używa **najnowszej** biblioteki `google-genai` zgodnie z oficjalną dokumentacją:
@@ -93,8 +99,11 @@ Aplikacja używa **najnowszej** biblioteki `google-genai` zgodnie z oficjalną d
 - Użycie `client.chats.create()` dla sesji czatu
 - Metoda `chat.send_message()` dla zachowania kontekstu konwersacji
 - `types.Part.from_bytes()` dla obrazów
+- **Safety Settings** z `BLOCK_NONE` dla wszystkich kategorii
 
-Dokumentacja: https://googleapis.github.io/python-genai/
+Dokumentacja:
+- https://googleapis.github.io/python-genai/
+- https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl
 
 ## Struktura plików
 
@@ -127,6 +136,38 @@ gemini-chat-app/
 - **gemini-1.5-pro** - Zaawansowany model o dużej pojemności
 - **gemini-1.5-flash** - Szybki model ogólnego przeznaczenia
 - **gemini-1.5-flash-8b** - Lekki i wydajny model
+
+## Ustawienia bezpieczeństwa
+
+### 🔓 Domyślnie wyłączone filtry
+
+Aplikacja **domyślnie wyłącza wszystkie filtry bezpieczeństwa** (`BLOCK_NONE`), co pozwala na:
+- Brak blokowania treści nękających (HARASSMENT)
+- Brak blokowania mowy nienawiści (HATE_SPEECH)
+- Brak blokowania treści jednoznacznie seksualnych (SEXUALLY_EXPLICIT)
+- Brak blokowania treści niebezpiecznych (DANGEROUS_CONTENT)
+- Brak blokowania treści dotyczących uczciwości obywatelskiej (CIVIC_INTEGRITY)
+
+### Włączanie filtrów
+
+Jeśli chcesz włączyć standardowe filtry bezpieczeństwa:
+1. Przejdź do panelu "Ustawienia"
+2. Zaznacz checkbox "Włącz filtry bezpieczeństwa"
+3. Kliknij "Zapisz ustawienia"
+
+Po włączeniu filtrów, aplikacja użyje domyślnego progu `BLOCK_MEDIUM_AND_ABOVE` dla wszystkich kategorii.
+
+### Kategorie filtrów
+
+Gdy filtry są włączone, blokowane są treści z średnim lub wyższym prawdopodobieństwem bycia niebezpiecznymi w następujących kategoriach:
+
+1. **HARASSMENT** - Nękanie, negatywne komentarze
+2. **HATE_SPEECH** - Mowa nienawiści, treści obraźliwe
+3. **SEXUALLY_EXPLICIT** - Treści jednoznacznie seksualne
+4. **DANGEROUS_CONTENT** - Treści promujące szkodliwe działania
+5. **CIVIC_INTEGRITY** - Zapytania związane z wyborami
+
+Więcej informacji: https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl
 
 ## Obsługiwane typy plików
 
@@ -176,6 +217,12 @@ pip install google-genai
 
 ## Changelog
 
+### v3.1 (2025-12-23)
+- 🔓 Dodanie konfiguracji filtrów bezpieczeństwa
+- ✅ Domyślnie wyłączone wszystkie filtry (BLOCK_NONE)
+- ⚙️ Opcja włączania/wyłączania filtrów w GUI
+- 📚 Dodanie 5 kategorii bezpieczeństwa zgodnie z dokumentacją
+
 ### v3.0 (2025-12-23)
 - ⭐ Dodanie najnowszych modeli Gemini 3: Pro, Flash, Pro Image
 - 🔄 Zmiana domyślnego modelu na gemini-3-flash-preview
@@ -193,26 +240,6 @@ pip install google-genai
 ### v1.0 (2025-12-23)
 - 🎉 Pierwsze wydanie
 
-## Cechy modeli Gemini 3
-
-### Gemini 3 Pro Preview
-- **Context Window**: 1M tokenów wejściowych / 64k wyjściowych
-- **Knowledge Cutoff**: Styczeń 2025
-- **Pricing**: $2/$12 za milion tokenów (<200k) lub $4/$18 (>200k)
-- **Najlepszy do**: Złożonych zadań wymagających głębokiego rozumowania
-
-### Gemini 3 Flash Preview  
-- **Context Window**: 1M tokenów wejściowych / 64k wyjściowych
-- **Knowledge Cutoff**: Styczeń 2025
-- **Pricing**: $0.50/$3 za milion tokenów
-- **Najlepszy do**: Szybkich odpowiedzi z inteligencją na poziomie Pro
-
-### Gemini 3 Pro Image Preview
-- **Context Window**: 65k tokenów wejściowych / 32k wyjściowych
-- **Knowledge Cutoff**: Styczeń 2025
-- **Pricing**: $2 za tekst wejściowy / $0.134 za obraz wyjściowy
-- **Najlepszy do**: Generowania obrazów 4K z rozumowaniem i grounding
-
 ## Licencja
 
 MIT License - możesz swobodnie używać, modyfikować i dystrybuować tę aplikację.
@@ -226,6 +253,7 @@ Stworzone przez am0n666
 - [Google Gemini API](https://ai.google.dev/)
 - [Oficjalna dokumentacja google-genai](https://googleapis.github.io/python-genai/)
 - [Gemini 3 Developer Guide](https://ai.google.dev/gemini-api/docs/gemini-3)
+- [Safety Settings Guide](https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl)
 - [Quickstart Guide](https://ai.google.dev/gemini-api/docs/quickstart)
 - [Dokumentacja PySimpleGUI](https://www.pysimplegui.org/)
 - [Repozytorium GitHub](https://github.com/am0n666/gemini-chat-app)

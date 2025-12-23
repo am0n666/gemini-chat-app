@@ -17,6 +17,7 @@ class Config:
         self.top_p = 0.95
         self.top_k = 40
         self.system_instruction = ''
+        self.enable_safety_filters = False  # Domyślnie wyłączone filtry bezpieczeństwa
         
         self.load()
     
@@ -33,6 +34,7 @@ class Config:
                     self.top_p = data.get('top_p', self.top_p)
                     self.top_k = data.get('top_k', self.top_k)
                     self.system_instruction = data.get('system_instruction', self.system_instruction)
+                    self.enable_safety_filters = data.get('enable_safety_filters', self.enable_safety_filters)
             except Exception as e:
                 print(f"Błąd wczytywania konfiguracji: {e}")
     
@@ -46,7 +48,8 @@ class Config:
                 'max_tokens': self.max_tokens,
                 'top_p': self.top_p,
                 'top_k': self.top_k,
-                'system_instruction': self.system_instruction
+                'system_instruction': self.system_instruction,
+                'enable_safety_filters': self.enable_safety_filters
             }
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)

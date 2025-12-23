@@ -1,10 +1,9 @@
 # Reasoning:
 # 1. Użycie oficjalnej najnowszej biblioteki google-genai zgodnie z dokumentacją
-# 2. Prawidłowy import: from google import genai
-# 3. Użycie client.chats.create() dla czatów zamiast generate_content
-# 4. Obsługa Part.from_bytes dla obrazów
-# 5. Dodanie najnowszych modeli Gemini 3 (Pro, Flash, Pro Image)
-# 6. Zachowanie całej funkcjonalności GUI
+# 2. Dodanie safety_settings z BLOCK_NONE dla wszystkich 5 kategorii
+# 3. Kategorie: HARASSMENT, HATE_SPEECH, SEXUALLY_EXPLICIT, DANGEROUS_CONTENT, CIVIC_INTEGRITY
+# 4. Możliwość włączenia/wyłączenia filtrów w GUI
+# 5. Zgodnie z dokumentacją: https://ai.google.dev/gemini-api/docs/safety-settings?hl=pl
 
 import PySimpleGUI as sg
 import os
@@ -36,6 +35,57 @@ class GeminiChatApp:
         # Inicjalizacja Gemini API
         if self.config.api_key:
             self.client = genai.Client(api_key=self.config.api_key)
+    
+    def get_safety_settings(self):
+        """Pobierz ustawienia bezpieczeństwa - wyłącz wszystkie filtry jeśli użytkownik tego chce"""
+        if not self.config.enable_safety_filters:
+            # Wyłącz wszystkie filtry bezpieczeństwa
+            return [
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                ),
+            ]
+        else:
+            # Użyj domyślnych filtrów (BLOCK_MEDIUM_AND_ABOVE)
+            return [
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
+                    threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+            ]
         
     def create_chat_session(self):
         """Utwórz nową sesję czatu"""
@@ -49,6 +99,7 @@ class GeminiChatApp:
                 top_p=self.config.top_p,
                 top_k=self.config.top_k,
                 max_output_tokens=self.config.max_tokens,
+                safety_settings=self.get_safety_settings(),  # Dodaj ustawienia bezpieczeństwa
             )
             
             # Dodaj system instruction jeśli jest
@@ -143,6 +194,15 @@ class GeminiChatApp:
             )],
             [sg.Text('Top K:')],
             [sg.Input(str(self.config.top_k), key='-TOP_K-', size=(35, 1))],
+            [sg.HorizontalSeparator()],
+            [sg.Text('Bezpieczeństwo:', font=('Helvetica', 11, 'bold'))],
+            [sg.Checkbox(
+                'Włącz filtry bezpieczeństwa (domyślnie: wyłączone)',
+                default=self.config.enable_safety_filters,
+                key='-SAFETY_FILTERS-',
+                tooltip='Wyłączenie filtrów pozwala na wszystkie treści bez blokowania'
+            )],
+            [sg.HorizontalSeparator()],
             [sg.Text('Instrukcje systemowe:')],
             [sg.Multiline(
                 self.config.system_instruction,
@@ -356,6 +416,7 @@ class GeminiChatApp:
                 self.config.top_p = values['-TOP_P-']
                 self.config.top_k = int(values['-TOP_K-'])
                 self.config.system_instruction = values['-SYSTEM_INSTRUCTION-']
+                self.config.enable_safety_filters = values['-SAFETY_FILTERS-']
                 self.config.save()
                 
                 # Rekonfiguruj API
@@ -376,6 +437,7 @@ class GeminiChatApp:
                 window['-TOP_P-'].update(self.config.top_p)
                 window['-TOP_K-'].update(self.config.top_k)
                 window['-SYSTEM_INSTRUCTION-'].update(self.config.system_instruction)
+                window['-SAFETY_FILTERS-'].update(self.config.enable_safety_filters)
                 sg.popup('Ustawienia zresetowane!')
         
         window.close()
